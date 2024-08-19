@@ -1,8 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gchat/constants.dart';
 import 'package:gchat/extensions.dart';
+import 'package:gchat/features/onboarding/viewmodel/signup_viewmodel.dart';
 import 'package:gchat/navigation.dart';
+import 'package:gchat/utils.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -93,9 +97,25 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
               SizedBox(
                 width: double.infinity,
                 height: 60,
-                child: ElevatedButton(
-                  onPressed: _login,
-                  child: const Text("Login"),
+                child: Consumer<AuthViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.isProcessLoading) {
+                      return const Center(
+                        child: ElevatedButton(
+                          onPressed: null,
+                          child: SpinKitChasingDots(
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      );
+                    }
+                    return child!;
+                  },
+                  child: ElevatedButton(
+                    onPressed: _login,
+                    child: const Text("Login"),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -111,7 +131,8 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                         style: context.textTheme.bodyLarge
                             ?.copyWith(color: AppColor.primaryColor),
                         recognizer: TapGestureRecognizer()
-                          ..onTap = () => context.pushNamed(AppRoutes.signUp),
+                          ..onTap = () => context
+                              .restorablePushReplacementNamed(AppRoutes.signUp),
                       )
                     ],
                   ),
@@ -124,13 +145,28 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
     );
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      final email = _emailTextController.value.text;
-      final password = _passwordTextController.value.text;
-      print("Email: $email, Password: $password");
+      try {
+        final email = _emailTextController.value.text;
+        final password = _passwordTextController.value.text;
 
-      context.restorablePushReplacementNamed(AppRoutes.chats);
+        await context.read<AuthViewModel>().signIn(email, password);
+
+        context.restorablePushReplacementNamed(AppRoutes.chats);
+
+        GChatUtils.showSnackbar(
+          context,
+          "Welcome back to GChat",
+          backgroundColor: Colors.lightGreen,
+        );
+      } catch (e) {
+        GChatUtils.showSnackbar(
+          context,
+          e.toString(),
+          backgroundColor: Colors.red,
+        );
+      }
     }
   }
 }

@@ -112,9 +112,9 @@ class _SignUpPageState extends State<SignUpPage> with RestorationMixin {
               SizedBox(
                 width: double.infinity,
                 height: 60,
-                child: Consumer<SignUpViewModel>(
+                child: Consumer<AuthViewModel>(
                   builder: (context, viewModel, child) {
-                    if (viewModel.isRegistrationLoading) {
+                    if (viewModel.isProcessLoading) {
                       return const Center(
                         child: ElevatedButton(
                           onPressed: null,
@@ -147,7 +147,9 @@ class _SignUpPageState extends State<SignUpPage> with RestorationMixin {
                             ?.copyWith(color: AppColor.primaryColor),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            context.pushNamed(AppRoutes.login);
+                            context.restorablePushReplacementNamed(
+                              AppRoutes.login,
+                            );
                           },
                       )
                     ],
@@ -161,17 +163,23 @@ class _SignUpPageState extends State<SignUpPage> with RestorationMixin {
     );
   }
 
+  /// Handles the sign-up process when the "REGISTER" button is pressed.
   void _signup() async {
+    // Check if the form is valid
     if (_formKey.currentState!.validate()) {
       try {
+        // Get the values from the text fields
         final name = _nameTextController.value.text;
         final email = _emailTextController.value.text;
         final password = _passwordTextController.value.text;
 
-        await context.read<SignUpViewModel>().signup(name, email, password);
+        // Call the sign-up method on the view model
+        await context.read<AuthViewModel>().signup(name, email, password);
 
-        context.pushNamed(AppRoutes.chats);
+        // If successful, navigate to the chats page
+        context.restorablePushReplacementNamed(AppRoutes.chats);
       } catch (e) {
+        // If an error occurs, show a snack bar with the error message
         GChatUtils.showSnackbar(
           context,
           e.toString(),

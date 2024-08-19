@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gchat/constants.dart';
-import 'package:gchat/features/chat/views/widgets/chat_tile.dart';
-import 'package:gchat/features/chat/views/widgets/profile_tile.dart';
+import 'package:gchat/features/chat/views/widgets/chats_view.dart';
+import 'package:gchat/features/chat/views/widgets/profile_view.dart';
 
 class ChatsPage extends StatefulWidget {
   const ChatsPage({super.key});
@@ -23,10 +22,7 @@ class _ChatsPageState extends State<ChatsPage> {
           automaticallyImplyLeading: false,
           title: const Text(
             "Chats",
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 36, fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -36,9 +32,7 @@ class _ChatsPageState extends State<ChatsPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
-          setState(() {
-            _currentTabIndex = index;
-          });
+          setState(() => _currentTabIndex = index);
         },
         currentIndex: _currentTabIndex,
         items: const [
@@ -52,50 +46,6 @@ class _ChatsPageState extends State<ChatsPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
-
-  @override
-  Widget build(Object context) {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          ProfileTile(name: "Emm Obi", email: "emm.obi@gmail.com"),
-          SizedBox(height: 24),
-          Text(
-            "Logout",
-            style: TextStyle(
-              color: AppColor.primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class ChatsView extends StatelessWidget {
-  const ChatsView({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      shrinkWrap: true,
-      children: const [
-        ChatTile(name: "John Doe"),
-        SizedBox(height: 16),
-        ChatTile(name: "Mary Jean")
-      ],
     );
   }
 }

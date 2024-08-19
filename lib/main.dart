@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:gchat/features/onboarding/viewmodel/signup_viewmodel.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (context) => SignUpViewModel(),
+          create: (context) => AuthViewModel(),
         )
       ],
       child: MaterialApp(
@@ -29,7 +30,9 @@ class MyApp extends StatelessWidget {
         restorationScopeId: "root",
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: "/",
+        initialRoute: FirebaseAuth.instance.currentUser == null
+            ? AppRoutes.onboarding
+            : AppRoutes.chats,
         onGenerateRoute: AppRoutes.instance.generateRoute,
       ),
     );
