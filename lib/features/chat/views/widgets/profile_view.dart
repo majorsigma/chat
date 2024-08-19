@@ -5,6 +5,7 @@ import 'package:gchat/extensions.dart';
 import 'package:gchat/features/chat/views/widgets/profile_tile.dart';
 import 'package:gchat/features/onboarding/viewmodel/signup_viewmodel.dart';
 import 'package:gchat/features/user/models/user.dart';
+import 'package:gchat/features/user/viewmodel/user_viewmodel.dart';
 import 'package:gchat/navigation.dart';
 import 'package:gchat/utils.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,7 @@ class _ProfileViewState extends State<ProfileView> {
   @override
   void initState() {
     super.initState();
-    context.read<AuthViewModel>().getUserProfile();
+    context.read<UserViewModel>().getUserProfile();
   }
 
   @override
@@ -28,7 +29,7 @@ class _ProfileViewState extends State<ProfileView> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: FutureBuilder<GChatUser>(
-        future: context.read<AuthViewModel>().getUserProfile(),
+        future: context.read<UserViewModel>().getUserProfile(),
         builder: (BuildContext context, AsyncSnapshot<GChatUser> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(

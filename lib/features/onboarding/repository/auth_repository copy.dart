@@ -21,7 +21,7 @@ class AuthRepository {
   static AuthRepository instance = AuthRepository._();
 
   /// A getter for the current authenticated user.
-  User? get currentAuthUser => _firebaseAuth.currentUser;
+  get currentAuthUser => _firebaseAuth.currentUser;
 
   /// Creates a new user account with the provided credentials and
   /// adds the user to the Firebase Firestore database.
@@ -129,8 +129,7 @@ class AuthRepository {
       // Query the "users" collection in Firebase Firestore to retrieve the user's document
       final query = await _firebaseFirestore
           .collection("users")
-          .where("uid",
-              isEqualTo: _firebaseAuth.currentUser?.uid) // Filter by UID
+          .where("uid", isEqualTo: _firebaseAuth.currentUser?.uid) // Filter by UID
           .get();
 
       // Extract the first document from the query result (assuming there's only one matching document)

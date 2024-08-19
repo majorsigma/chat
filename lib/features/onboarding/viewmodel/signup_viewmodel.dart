@@ -1,13 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gchat/features/onboarding/repository/auth_repository.dart';
-import 'package:gchat/features/user/models/user.dart';
 
 /// A view model for handling authentication operations.
 class AuthViewModel extends ChangeNotifier {
   /// Indicates whether the  process is currently loading.
   bool isProcessLoading = false;
 
-  get currentAuthUser => AuthRepository.instance.currentAuthUser;
+  User? get currentAuthUser => AuthRepository.instance.currentAuthUser;
 
   /// Signs up a user with the provided name, email, and password.
   ///
@@ -76,40 +76,5 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> signOut() async {
     // Call the signOut method of the AuthRepository to log out the user.
     await AuthRepository.instance.signOut();
-  }
-
-  /// Retrieves the current user's profile information.
-  ///
-  /// This method communicates with the AuthRepository to fetch the user's profile data.
-  /// It notifies the listeners when the retrieval process starts and ends.
-  ///
-  /// @return A Future that completes with the user's profile information.
-  Future<GChatUser> getUserProfile() async {
-    // // Indicate that the profile retrieval process has started.
-    // // We set isProcessLoading to true to notify the UI that a operation is in progress.
-    // isProcessLoading = true;
-    // notifyListeners();
-
-    try {
-      // Call the getUserProfile method of the AuthRepository to fetch the user's profile.
-      // This method returns a GChatUser object containing the user's profile information.
-      final GChatUser user = await AuthRepository.instance.getUserProfile();
-
-      // // Indicate that the profile retrieval process has completed successfully.
-      // // We set isProcessLoading to false to notify the UI that the operation has finished.
-      // isProcessLoading = false;
-      // notifyListeners();
-
-      // Return the user's profile information.
-      return user;
-    } catch (e) {
-      // Indicate that the profile retrieval process has failed.
-      // We set isProcessLoading to false to notify the UI that the operation has failed.
-      // isProcessLoading = false;
-      // notifyListeners();
-
-      // Rethrow the exception to allow it to be handled upstream.
-      rethrow;
-    }
   }
 }

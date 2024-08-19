@@ -4,6 +4,7 @@ import 'package:gchat/features/chat/views/chats_page.dart';
 import 'package:gchat/features/onboarding/views/pages/login_page.dart';
 import 'package:gchat/features/onboarding/views/pages/onboarding_page.dart';
 import 'package:gchat/features/onboarding/views/pages/sign_up_page.dart';
+import 'package:gchat/features/user/models/user.dart';
 import 'package:gchat/utils.dart';
 
 class AppRoutes {
@@ -48,7 +49,12 @@ class AppRoutes {
       case AppRoutes.chatDm:
         return MaterialPageRoute(
           settings: routeSettings,
-          builder: (context) => const ChatDMPage(),
+          builder: (context) {
+            _logger.d("Route Arguments: ${routeSettings.arguments}");
+            final extraMap = routeSettings.arguments as Map<String, dynamic>;
+            final user = GChatUser.fromMap(extraMap["receipient"]);
+            return ChatDMPage(receipient: user);
+          },
         );
       default:
         return null;

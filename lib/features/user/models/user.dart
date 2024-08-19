@@ -47,13 +47,6 @@ class GChatUser {
 
   String toJson() => json.encode(toMap());
 
-  factory GChatUser.fromJson(String source) =>
-      GChatUser.fromMap(json.decode(source) as Map<String, dynamic>);
-
-  @override
-  String toString() =>
-      'GChatUser(uid: $uid, name: $name, email: $email, isOnline: $isOnline)';
-
   @override
   bool operator ==(covariant GChatUser other) {
     if (identical(this, other)) return true;
