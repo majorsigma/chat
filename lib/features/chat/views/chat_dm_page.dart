@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:gchat/extensions.dart';
 import 'package:gchat/features/chat/model/chat.dart';
-import 'package:gchat/features/chat/repositories/chat_repository.dart';
 import 'package:gchat/features/chat/viewmodels/chat_viewmodel.dart';
 import 'package:gchat/features/onboarding/viewmodel/signup_viewmodel.dart';
 import 'package:gchat/utils.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import 'package:gchat/constants.dart';
 import 'package:gchat/features/chat/views/widgets/chat_tile.dart';
@@ -62,6 +63,7 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   @override
   Widget build(BuildContext context) {
     _chatStream = context.read<ChatsViewModel>().fetchChat();
+    final currentUserId = context.read<AuthViewModel>().currentAuthUser?.uid;
     return Scaffold(
       backgroundColor: const Color(0xfff6f6f6),
       appBar: PreferredSize(
@@ -91,29 +93,45 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                           } else {
                             _messages = chat.messages ?? [];
 
+                            if (_messages.isEmpty) {
+                              ;
+                              return const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.mail,
+                                      size: 40,
+                                    ),
+                                    Text("Start new conversation with user!")
+                                  ],
+                                ),
+                              );
+                            }
+
                             return ListView.separated(
                               itemCount: _messages.length,
                               itemBuilder: (context, index) {
                                 final message = _messages[index];
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColor.iconBackground,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  padding: const EdgeInsets.all(16),
-                                  margin: message.senderId ==
-                                          context
-                                              .read<AuthViewModel>()
-                                              .currentAuthUser!
-                                              .uid
-                                      ? const EdgeInsets.only(left: 129)
-                                      : const EdgeInsets.only(right: 129),
-                                  child: Text(
-                                    message.message ?? "",
-                                    style: context.textTheme.bodyLarge
-                                        ?.copyWith(color: Colors.white),
-                                  ),
-                                );
+                                return message.senderId == currentUserId
+                                    ? Row(
+                                        children: [
+                                          const Expanded(child: SizedBox()),
+                                          ChatBubble(
+                                            message: message,
+                                            userId: currentUserId ?? "",
+                                          ),
+                                        ],
+                                      )
+                                    : Row(
+                                        children: [
+                                          ChatBubble(
+                                            message: message,
+                                            userId: currentUserId ?? "",
+                                          ),
+                                          const Expanded(child: SizedBox()),
+                                        ],
+                                      );
                               },
                               separatorBuilder: (context, index) =>
                                   const SizedBox(height: 16),
@@ -189,7 +207,7 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
     try {
       final message = _messageController.value.text;
       if (message.isEmpty) return;
-      // _messageController.value.text = "";
+      _messageController.value.text = "";
       await context.read<ChatsViewModel>().sendMessage(
             message: message,
             receipient: widget.receipient.uid,
@@ -201,5 +219,65 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
         backgroundColor: Colors.red,
       );
     }
+  }
+}
+
+class ChatBubble extends StatelessWidget {
+  const ChatBubble({
+    super.key,
+    required this.message,
+    required this.userId,
+  });
+
+  final Message message;
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          constraints: const BoxConstraints(
+            maxWidth: 250,
+          ),
+          decoration: BoxDecoration(
+            color: message.receiverId == userId
+                ? Colors.white
+                : const Color(0xffdfa532),
+            borderRadius: BorderRadius.circular(32),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            crossAxisAlignment: message.receiverId != userId
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.end,
+            children: [
+              Text(
+                message.message ?? "",
+                style: context.textTheme.bodyLarge?.copyWith(
+                  color: Colors.black,
+                ),
+              ),
+              Text(
+                DateFormat("hh:mm").format(
+                  DateTime.parse(
+                    message.createdAt.toString(),
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: 10,
+                color: message.receiverId != userId
+                ? Colors.white
+                : const Color(0xffdfa532),
+                 ),
+              ),
+            ],
+          ),
+        ),
+        // Positioned(
+        //   child:
+        // )
+      ],
+    );
   }
 }

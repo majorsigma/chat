@@ -4,6 +4,7 @@ import 'package:gchat/constants.dart';
 class AppTheme {
   static final lightTheme = ThemeData(
     fontFamily: "Roboto",
+    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xffdfa532)),
     scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(backgroundColor: Colors.white),
     elevatedButtonTheme: const ElevatedButtonThemeData(

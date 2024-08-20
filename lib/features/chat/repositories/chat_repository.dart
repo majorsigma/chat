@@ -109,8 +109,6 @@ class ChatRepository {
             .where("chatId", isEqualTo: oldChat.chatId)
             .get();
         querySnapshot.docs.first.reference.update(oldChat.toMap());
-
-        _logger.d("New message ${oldChat.toMap()}");
       }
     }
   }
@@ -150,18 +148,52 @@ class ChatRepository {
   //   }
   // }
 
+  // Stream<Chat> fetchChat() {
+  //   try {
+  //     // Query the "users" collection in Firebase Firestore to retrieve all user documents
+  //     // except the current user's document, using the current user's UID as a filter
+  //     final query = _firebaseFirestore
+  //         .collection("chats")
+  //         .where(
+  //           "chatId",
+  //           isNotEqualTo: _firebaseAuth.currentUser?.uid,
+  //         ) // Filter out the current user
+  //         .get()
+  //         .asStream();
+
+  //     StreamTransformer<QuerySnapshot<Map<String, dynamic>>, Chat>
+  //         streamTransformer = StreamTransformer.fromHandlers(
+  //       handleData: (
+  //         QuerySnapshot<Map<String, dynamic>> data,
+  //         EventSink<Chat> sink,
+  //       ) {
+  //         final chatSnapshot = data.docs.where((test) => test.exists);
+  //         final chat = Chat.fromMap(chatSnapshot.first.data());
+  //         sink.add(chat);
+  //       },
+  //     );
+
+  //     final chatStream = query.transform(streamTransformer);
+
+  //     // Return the list of GChatUser objects
+  //     return chatStream;
+  //   } on FirebaseAuthException catch (e) {
+  //     // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
+  //     throw Exception(e.message);
+  //   } on FirebaseException catch (e) {
+  //     // Catch any other Firebase-specific exceptions and rethrow as a general Exception
+  //     throw Exception(e.message);
+  //   } catch (e) {
+  //     // Rethrow any other exceptions for further error handling and debugging
+  //     rethrow;
+  //   }
+  // }
+
   Stream<Chat> fetchChat() {
     try {
       // Query the "users" collection in Firebase Firestore to retrieve all user documents
       // except the current user's document, using the current user's UID as a filter
-      final query = _firebaseFirestore
-          .collection("chats")
-          .where(
-            "chatId",
-            isNotEqualTo: _firebaseAuth.currentUser?.uid,
-          ) // Filter out the current user
-          .get()
-          .asStream();
+      final chatSnapshot = _firebaseFirestore.collection("chats").snapshots();
 
       StreamTransformer<QuerySnapshot<Map<String, dynamic>>, Chat>
           streamTransformer = StreamTransformer.fromHandlers(
@@ -169,13 +201,21 @@ class ChatRepository {
           QuerySnapshot<Map<String, dynamic>> data,
           EventSink<Chat> sink,
         ) {
-          final chatSnapshot = data.docs.where((test) => test.exists);
-          final chat = Chat.fromMap(chatSnapshot.first.data());
-          sink.add(chat);
+          final allChats = data.docs
+              .map((data) {
+                return Chat.fromMap(data.data());
+              })
+              .toList()
+              .where((chat) {
+                return chat.members!.contains(_firebaseAuth.currentUser!.uid);
+              })
+              .toList();
+
+          sink.add(allChats.first);
         },
       );
 
-      final chatStream = query.transform(streamTransformer);
+      final chatStream = chatSnapshot.transform(streamTransformer);
 
       // Return the list of GChatUser objects
       return chatStream;

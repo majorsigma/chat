@@ -41,7 +41,7 @@ class UserViewModel extends ChangeNotifier {
       // This method returns a list of GChatUser objects containing the users' profile information.
       final List<GChatUser> users = await UserRepository.instance.getAllUsers();
 
-      debugPrint("User's: ${users}");
+      // debugPrint("User's: ${users}");
 
       // Return the list of users.
       return users;
