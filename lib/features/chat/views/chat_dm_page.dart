@@ -5,7 +5,6 @@ import 'package:gchat/features/chat/model/chat.dart';
 import 'package:gchat/features/chat/viewmodels/chat_viewmodel.dart';
 import 'package:gchat/features/onboarding/viewmodel/signup_viewmodel.dart';
 import 'package:gchat/utils.dart';
-import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -25,6 +24,10 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   final _messageController = RestorableTextEditingController();
   List<Message> _messages = [];
   late Stream<Chat> _chatStream;
+  final _scrollController = ScrollController();
+  final FocusNode _messageFocusNode = FocusNode();
+  final _logger = GChatUtils.getLogger("ChatDMPage");
+  double _scrollExtent = 0;
 
   void _registerForRestoration() {
     registerForRestoration(_messageController, "messageController");
@@ -52,6 +55,15 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
     super.initState();
     _registerForRestoration();
     _initializeChat();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _messageFocusNode.addListener(() {
+        _logger.d("Has focus: ${_messageFocusNode.hasFocus}");
+        if (_messageFocusNode.hasFocus) {
+          _scrollToBottom();
+        }
+      });
+      _scrollToBottom();
+    });
   }
 
   @override
@@ -62,8 +74,9 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
 
   @override
   Widget build(BuildContext context) {
-    _chatStream = context.read<ChatsViewModel>().fetchChat();
     final currentUserId = context.read<AuthViewModel>().currentAuthUser?.uid;
+    _chatStream = context.read<ChatsViewModel>().fetchChat();
+
     return Scaffold(
       backgroundColor: const Color(0xfff6f6f6),
       appBar: PreferredSize(
@@ -85,6 +98,7 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                       stream: _chatStream,
                       builder: (context, AsyncSnapshot<Chat> snapshot) {
                         if (snapshot.hasData) {
+                          _scrollToBottom();
                           final chat = snapshot.data;
                           if (chat == null) {
                             return const Center(
@@ -94,7 +108,6 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                             _messages = chat.messages ?? [];
 
                             if (_messages.isEmpty) {
-                              ;
                               return const Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +123,9 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                             }
 
                             return ListView.separated(
+                              controller: _scrollController,
                               itemCount: _messages.length,
+                              physics: const BouncingScrollPhysics(),
                               itemBuilder: (context, index) {
                                 final message = _messages[index];
                                 return message.senderId == currentUserId
@@ -139,16 +154,7 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                             );
                           }
                         } else {
-                          return ListView.separated(
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final message = _messages[index];
-                              return Container(height: 24, color: Colors.red);
-                            },
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 16),
-                            shrinkWrap: true,
-                          );
+                          return Container();
                         }
                       },
                     ),
@@ -166,7 +172,10 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                 Expanded(
                   child: TextField(
                     maxLines: 1,
+                    focusNode: _messageFocusNode,
                     controller: _messageController.value,
+                    onTap: () => _scrollToBottom(),
+                    autofocus: true,
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.all(16),
                       border: OutlineInputBorder(
@@ -212,6 +221,12 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
             message: message,
             receipient: widget.receipient.uid,
           );
+
+      await _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + 50,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     } catch (e) {
       GChatUtils.showSnackbar(
         context,
@@ -219,6 +234,18 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
         backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      if (_scrollController.hasClients) {
+        await _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 50,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 }
 
@@ -248,7 +275,7 @@ class ChatBubble extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
-            crossAxisAlignment: message.receiverId != userId
+            crossAxisAlignment: message.receiverId == userId
                 ? CrossAxisAlignment.start
                 : CrossAxisAlignment.end,
             children: [
@@ -266,10 +293,10 @@ class ChatBubble extends StatelessWidget {
                 ),
                 style: TextStyle(
                   fontSize: 10,
-                color: message.receiverId != userId
-                ? Colors.white
-                : const Color(0xffdfa532),
-                 ),
+                  color: message.receiverId != userId
+                      ? Colors.white
+                      : const Color(0xffdfa532),
+                ),
               ),
             ],
           ),

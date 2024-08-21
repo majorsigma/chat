@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -65,4 +62,14 @@ class DefaultFirebaseOptions {
     storageBucket: 'gchat-e08d4.appspot.com',
     iosBundleId: 'com.example.gchat',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCjN5ILcN5bS-p3ALXlpKQ2_lKYWh586yI',
+    appId: '1:230097563479:web:872f0242db6c55b4241812',
+    messagingSenderId: '230097563479',
+    projectId: 'gchat-e08d4',
+    authDomain: 'gchat-e08d4.firebaseapp.com',
+    storageBucket: 'gchat-e08d4.appspot.com',
+  );
+
 }

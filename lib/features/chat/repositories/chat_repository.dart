@@ -68,6 +68,10 @@ class ChatRepository {
     return null;
   }
 
+  /// Sends a new message to the specified recipient.
+  ///
+  /// [message] The text of the message to be sent.
+  /// [receipientId] The ID of the recipient of the message.
   Future<void> sendMessage({
     required String message,
     required String receipientId,
@@ -76,21 +80,24 @@ class ChatRepository {
     if (user != null) {
       final currentUserId = user.uid;
 
-      // Go to the chat's collection and check if the chat document already exists
+      // Retrieve the chat document from Firestore
       final querySnapshot = await _firebaseFirestore.collection("chats").get();
       final documents = querySnapshot.docs;
 
-      // if it does, return the list of messages associated with the chat id
+      // Check if the chat document already exists
       if (documents.isNotEmpty) {
+        // Map the documents to a list of Chat objects
         final List<Chat> chats = documents.map<Chat>((element) {
           final chat = Chat.fromMap(element.data());
           return chat;
         }).toList();
-        final oldChat = chats
-            .where(
-              (chat) => chat.members!.contains(receipientId),
-            )
-            .first;
+
+        // Find the existing chat with the recipient
+        final oldChat = chats.firstWhere(
+          (chat) => chat.members!.contains(receipientId),
+        );
+
+        // Create a new message
         final newMessageTimeStamp = DateTime.now().toString();
         final newMessage = Message(
           messageId: uuid.generate(),
@@ -100,10 +107,12 @@ class ChatRepository {
           createdAt: newMessageTimeStamp,
         );
 
+        // Update the chat document
         oldChat.messages!.add(newMessage);
         oldChat.lastMessage = message;
         oldChat.lastMessageTime = newMessageTimeStamp;
 
+        // Update the chat document in Firestore
         final querySnapshot = await _firebaseFirestore
             .collection("chats")
             .where("chatId", isEqualTo: oldChat.chatId)
@@ -113,120 +122,31 @@ class ChatRepository {
     }
   }
 
-  // Stream<Chat?> fetchChat() async {
-  //   try {
-  //     final user = _firebaseAuth.currentUser;
-  //     if (user != null) {
-  //       final currentUserId = user.uid;
-
-  //       // Go to the chat's collection and check if the chat document already exists
-  //       final querySnapshot =
-  //           await _firebaseFirestore.collection("chats").get();
-  //       final documents = querySnapshot.docs;
-
-  //       // if it does, return the list of messages associated with the chat id
-  //       if (documents.isNotEmpty) {
-  //         final List<Chat> chats = documents.map<Chat>((element) {
-  //           final chat = Chat.fromJson(element.data());
-  //           return chat;
-  //         }).toList();
-  //         final oldChat = chats
-  //             .where(
-  //               (chat) => chat.members!.contains(receipientId),
-  //             )
-  //             .first;
-
-  //         return oldChat;
-  //       }
-  //     }
-  //   } on FirebaseAuthException catch (e) {
-  //     throw Exception(e.message);
-  //   } on FirebaseException catch (e) {
-  //     throw Exception(e.message);
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
-
-  // Stream<Chat> fetchChat() {
-  //   try {
-  //     // Query the "users" collection in Firebase Firestore to retrieve all user documents
-  //     // except the current user's document, using the current user's UID as a filter
-  //     final query = _firebaseFirestore
-  //         .collection("chats")
-  //         .where(
-  //           "chatId",
-  //           isNotEqualTo: _firebaseAuth.currentUser?.uid,
-  //         ) // Filter out the current user
-  //         .get()
-  //         .asStream();
-
-  //     StreamTransformer<QuerySnapshot<Map<String, dynamic>>, Chat>
-  //         streamTransformer = StreamTransformer.fromHandlers(
-  //       handleData: (
-  //         QuerySnapshot<Map<String, dynamic>> data,
-  //         EventSink<Chat> sink,
-  //       ) {
-  //         final chatSnapshot = data.docs.where((test) => test.exists);
-  //         final chat = Chat.fromMap(chatSnapshot.first.data());
-  //         sink.add(chat);
-  //       },
-  //     );
-
-  //     final chatStream = query.transform(streamTransformer);
-
-  //     // Return the list of GChatUser objects
-  //     return chatStream;
-  //   } on FirebaseAuthException catch (e) {
-  //     // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
-  //     throw Exception(e.message);
-  //   } on FirebaseException catch (e) {
-  //     // Catch any other Firebase-specific exceptions and rethrow as a general Exception
-  //     throw Exception(e.message);
-  //   } catch (e) {
-  //     // Rethrow any other exceptions for further error handling and debugging
-  //     rethrow;
-  //   }
-  // }
-
+  /// Fetches the current user's chat.
+  ///
+  /// Returns a stream of chats that the current user is a member of.
   Stream<Chat> fetchChat() {
     try {
-      // Query the "users" collection in Firebase Firestore to retrieve all user documents
-      // except the current user's document, using the current user's UID as a filter
-      final chatSnapshot = _firebaseFirestore.collection("chats").snapshots();
+      // Get a stream of snapshots from the "chats" collection
+      final chatStream = _firebaseFirestore.collection("chats").snapshots();
 
-      StreamTransformer<QuerySnapshot<Map<String, dynamic>>, Chat>
-          streamTransformer = StreamTransformer.fromHandlers(
-        handleData: (
-          QuerySnapshot<Map<String, dynamic>> data,
-          EventSink<Chat> sink,
-        ) {
-          final allChats = data.docs
-              .map((data) {
-                return Chat.fromMap(data.data());
-              })
+      // Transform the stream to filter and map chat documents
+      return chatStream.transform(StreamTransformer.fromHandlers(
+        handleData:
+            (QuerySnapshot<Map<String, dynamic>> data, EventSink<Chat> sink) {
+          // Filter chats that the current user is a member of
+          final userChats = data.docs
+              .map((data) => Chat.fromMap(data.data()))
               .toList()
-              .where((chat) {
-                return chat.members!.contains(_firebaseAuth.currentUser!.uid);
-              })
-              .toList();
+              .where((chat) =>
+                  chat.members!.contains(_firebaseAuth.currentUser!.uid));
 
-          sink.add(allChats.first);
+          // Add the first matching chat to the sink
+          sink.add(userChats.first);
         },
-      );
-
-      final chatStream = chatSnapshot.transform(streamTransformer);
-
-      // Return the list of GChatUser objects
-      return chatStream;
-    } on FirebaseAuthException catch (e) {
-      // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
-      throw Exception(e.message);
-    } on FirebaseException catch (e) {
-      // Catch any other Firebase-specific exceptions and rethrow as a general Exception
-      throw Exception(e.message);
+      ));
     } catch (e) {
-      // Rethrow any other exceptions for further error handling and debugging
+      // Rethrow any exceptions for further error handling and debugging
       rethrow;
     }
   }

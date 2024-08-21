@@ -59,27 +59,22 @@ class UserRepository {
   /// filters out the current user's document, and returns a list of [GChatUser] objects.
   ///
   /// @return A list of [GChatUser] objects representing all users except the current user
-  Future<List<GChatUser>> getAllUsers() async {
+  Stream<List<GChatUser>> getAllUsers() {
     try {
       // Query the "users" collection in Firebase Firestore to retrieve all user documents
       // except the current user's document, using the current user's UID as a filter
-      final query = await _firebaseFirestore
-          .collection("users")
-          .where(
-            "uid",
-            isNotEqualTo: _firebaseAuth.currentUser?.uid,
-          ) // Filter out the current user
-          .get();
+      final querySnapshot = _firebaseFirestore.collection("users").snapshots();
 
-      // Map each document in the query result to a GChatUser object
-      final users = query.docs.map((document) {
-        // Extract the document data and create a new GChatUser object
-        final userData = document.data();
-        return GChatUser.fromMap(userData);
-      }).toList();
+      final usersStream = querySnapshot.map((snapshot) {
+        return snapshot.docs.map<GChatUser>((documentMap) {
+          return GChatUser.fromMap(documentMap.data());
+        }).where((user) {
+          return user.uid != _firebaseAuth.currentUser!.uid;
+        }).toList();
+      });
 
       // Return the list of GChatUser objects
-      return users;
+      return usersStream;
     } on FirebaseAuthException catch (e) {
       // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
       throw Exception(e.message);
@@ -98,59 +93,59 @@ class UserRepository {
   /// filters out the current user's document, and returns a list of [GChatUser] objects.
   ///
   /// @return A list of [GChatUser] objects representing all users except the current user
-  Stream<List<GChatUser>> getAllUsersStream() {
-    try {
-      // Query the "users" collection in Firebase Firestore to retrieve all user documents
-      // except the current user's document, using the current user's UID as a filter
-      final query = _firebaseFirestore
-          .collection("users")
-          .where(
-            "uid",
-            isNotEqualTo: _firebaseAuth.currentUser?.uid,
-          ) // Filter out the current user
-          .get()
-          .asStream();
+  // Stream<List<GChatUser>> getAllUsersStream() {
+  //   try {
+  //     // Query the "users" collection in Firebase Firestore to retrieve all user documents
+  //     // except the current user's document, using the current user's UID as a filter
+  //     final query = _firebaseFirestore
+  //         .collection("users")
+  //         .where(
+  //           "uid",
+  //           isNotEqualTo: _firebaseAuth.currentUser?.uid,
+  //         ) // Filter out the current user
+  //         .get()
+  //         .asStream();
 
-      // Map each document in the query result to a GChatUser object
-      // final users = query.docs.map((document) {
-      //   // Extract the document data and create a new GChatUser object
-      //   final userData = document.data();
-      //   return GChatUser.fromMap(userData);
-      // }).toList();
-      StreamTransformer<QuerySnapshot<Map<String, dynamic>>, List<GChatUser>>
-          streamTransformer = StreamTransformer.fromHandlers(
-        handleData: (
-          QuerySnapshot<Map<String, dynamic>> data,
-          EventSink<List<GChatUser>> sink,
-        ) {
-          final users = data.docs.map((document) {
-            // Extract the document data and create a new GChatUser object
-            final userData = document.data();
-            return GChatUser.fromMap(userData);
-          }).toList();
-          sink.add(users);
-        },
-        handleError: (error, stackTrace, sink) {
-          // Handle any errors that occur during the stream transformation
-          // You can log the error, emit a custom error event, or perform any other necessary actions
-          // For example, you can emit a custom error event to notify the UI about the error
-          sink.addError(error.toString());
-        },
-      );
+  //     // Map each document in the query result to a GChatUser object
+  //     // final users = query.docs.map((document) {
+  //     //   // Extract the document data and create a new GChatUser object
+  //     //   final userData = document.data();
+  //     //   return GChatUser.fromMap(userData);
+  //     // }).toList();
+  //     StreamTransformer<QuerySnapshot<Map<String, dynamic>>, List<GChatUser>>
+  //         streamTransformer = StreamTransformer.fromHandlers(
+  //       handleData: (
+  //         QuerySnapshot<Map<String, dynamic>> data,
+  //         EventSink<List<GChatUser>> sink,
+  //       ) {
+  //         final users = data.docs.map((document) {
+  //           // Extract the document data and create a new GChatUser object
+  //           final userData = document.data();
+  //           return GChatUser.fromMap(userData);
+  //         }).toList();
+  //         sink.add(users);
+  //       },
+  //       handleError: (error, stackTrace, sink) {
+  //         // Handle any errors that occur during the stream transformation
+  //         // You can log the error, emit a custom error event, or perform any other necessary actions
+  //         // For example, you can emit a custom error event to notify the UI about the error
+  //         sink.addError(error.toString());
+  //       },
+  //     );
 
-      final userStream = query.transform(streamTransformer);
+  //     final userStream = query.transform(streamTransformer);
 
-      // Return the list of GChatUser objects
-      return userStream;
-    } on FirebaseAuthException catch (e) {
-      // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
-      throw Exception(e.message);
-    } on FirebaseException catch (e) {
-      // Catch any other Firebase-specific exceptions and rethrow as a general Exception
-      throw Exception(e.message);
-    } catch (e) {
-      // Rethrow any other exceptions for further error handling and debugging
-      rethrow;
-    }
-  }
+  //     // Return the list of GChatUser objects
+  //     return userStream;
+  //   } on FirebaseAuthException catch (e) {
+  //     // Catch any Firebase Authentication-specific exceptions and rethrow as a general Exception
+  //     throw Exception(e.message);
+  //   } on FirebaseException catch (e) {
+  //     // Catch any other Firebase-specific exceptions and rethrow as a general Exception
+  //     throw Exception(e.message);
+  //   } catch (e) {
+  //     // Rethrow any other exceptions for further error handling and debugging
+  //     rethrow;
+  //   }
+  // }
 }

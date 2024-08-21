@@ -14,38 +14,9 @@ class ChatsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.read<UserViewModel>().getAllUsers();
-    // return
-
-    // FutureBuilder<List<GChatUser>>(
-    //   future: context.read<UserViewModel>().getAllUsers(),
-    //   builder: (BuildContext context, AsyncSnapshot<List<GChatUser>> snapshot) {
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return const Center(
-    //         child: SpinKitChasingDots(color: AppColor.primaryColor, size: 16),
-    //       );
-    //     } else if (snapshot.hasError) {
-    //       return const Center(child: Text("An error occurred"));
-    //     } else if (snapshot.hasData) {
-    //       final users = snapshot.data!;
-    //       return ListView.separated(
-    //         separatorBuilder: (BuildContext context, int index) {
-    //           return const Divider(
-    //             color: AppColor.primaryColor,
-    //             thickness: 0.5,
-    //           );
-    //         },
-    //         itemCount: snapshot.data!.length,
-    //         itemBuilder: (BuildContext context, int index) {
-    //           return ChatTile(user: users[index]);
-    //         },
-    //       );
-    //     }
-    //     return const Center(child: Text("No users found"));
-    //   },
-    // );
 
     return StreamBuilder<List<GChatUser>>(
-      stream: context.read<UserViewModel>().getAllUsersStream(),
+      stream: context.read<UserViewModel>().getAllUsers(),
       builder: (BuildContext context, AsyncSnapshot<List<GChatUser>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(

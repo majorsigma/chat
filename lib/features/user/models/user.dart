@@ -36,7 +36,7 @@ class GChatUser {
     };
   }
 
-  factory GChatUser.fromMap(Map<String, dynamic> map) {
+  factory GChatUser.fromMap(Map map) {
     return GChatUser(
       uid: map['uid'] as String,
       name: map['name'] as String,
