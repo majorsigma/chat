@@ -29,12 +29,25 @@ jobs:
           name: GChat
           path: build/app/outputs/apk/release/app-release.apk
       - name: Create Release
+        id: create-release
         uses: actions/create-release@v1
+        with:
+          tag_name: "v${GITHUB_RUN_NUMBER}"
+          release_name: "Release ${GITHUB_RUN_NUMBER}"
+          body: "Automated release for commit ${GITHUB_SHA}"
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NAME: "Release ${GITHUB_RUN_NUMBER}"
-          RELEASE_BODY: "Automated release for commit ${GITHUB_SHA}"
-          TAG_NAME: "v${GITHUB_RUN_NUMBER}"
-          RELEASE_ASSET: "build/app/outputs/apk/release/app-release.apk"
+
+      - name: Upload APK Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: "build/app/outputs/apk/release/app-release.apk"
+          asset_name: "GChat.apk"
+          asset_content_type: "application/vnd.android.package-archive"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
 
