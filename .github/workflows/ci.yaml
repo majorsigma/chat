@@ -22,7 +22,7 @@ jobs:
           cache: true
       - run: flutter clean
       - run: flutter pub get
-      - run  flutter run build_runner build --delete-conflicting-outputs
+      - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v1
         with:
