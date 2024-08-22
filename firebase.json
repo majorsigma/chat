@@ -29,11 +29,8 @@
     }
   },
   "hosting": {
+    "site": "gchat-e08d4-37167",
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   }
 }

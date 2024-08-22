@@ -30,19 +30,21 @@ class ChatRepository {
         final documents = querySnapshot.docs;
 
         // if it does, return the list of messages associated with the chat id
-        if (documents.isNotEmpty) {
-          final List<Chat> chats = documents.map<Chat>((element) {
-            final chat = Chat.fromMap(element.data());
-            return chat;
-          }).toList();
-          final oldChat = chats
-              .where(
-                (chat) => chat.members!.contains(recepientId),
-              )
-              .first;
 
-          return oldChat;
-        } else {
+        final List<Chat> chats = documents.map<Chat>((element) {
+          final chat = Chat.fromMap(element.data());
+          return chat;
+        }).toList();
+
+        final oldChats = chats
+            .where(
+              (chat) =>
+                  chat.members!.contains(recepientId) &&
+                  chat.members!.contains(currentUserId),
+            )
+            .toList();
+
+        if (oldChats.isEmpty) {
           // geenrate a new chat id
           final chatId = uuid.generate();
           // Create a new chat document
@@ -54,10 +56,10 @@ class ChatRepository {
             messages: [],
           );
 
-          _logger.d("New chat: ${newChat.toMap()}");
-
           await _firebaseFirestore.collection("chats").add(newChat.toMap());
           return newChat;
+        } else {
+          return oldChats.first;
         }
       } else {
         _logger.e("User is null");
@@ -94,7 +96,9 @@ class ChatRepository {
 
         // Find the existing chat with the recipient
         final oldChat = chats.firstWhere(
-          (chat) => chat.members!.contains(receipientId),
+          (chat) =>
+              chat.members!.contains(receipientId) &&
+              chat.members!.contains(currentUserId),
         );
 
         // Create a new message
@@ -125,26 +129,36 @@ class ChatRepository {
   /// Fetches the current user's chat.
   ///
   /// Returns a stream of chats that the current user is a member of.
-  Stream<Chat> fetchChat() {
+  Stream<Chat?> fetchChat(String recipientId) {
     try {
       // Get a stream of snapshots from the "chats" collection
       final chatStream = _firebaseFirestore.collection("chats").snapshots();
 
       // Transform the stream to filter and map chat documents
-      return chatStream.transform(StreamTransformer.fromHandlers(
-        handleData:
-            (QuerySnapshot<Map<String, dynamic>> data, EventSink<Chat> sink) {
-          // Filter chats that the current user is a member of
-          final userChats = data.docs
-              .map((data) => Chat.fromMap(data.data()))
-              .toList()
-              .where((chat) =>
-                  chat.members!.contains(_firebaseAuth.currentUser!.uid));
+      return chatStream.transform(
+        StreamTransformer.fromHandlers(
+          handleData: (QuerySnapshot<Map<String, dynamic>> data,
+              EventSink<Chat?> sink) {
+            // Filter chats that the current user is a member of
+            final userChats = data.docs
+                .map((data) => Chat.fromMap(data.data()))
+                .toList()
+                .where(
+                  (chat) =>
+                      chat.members!.contains(_firebaseAuth.currentUser!.uid) &&
+                      chat.members!.contains(recipientId),
+                )
+                .toList();
 
-          // Add the first matching chat to the sink
-          sink.add(userChats.first);
-        },
-      ));
+            // Add the first matching chat to the sink
+            if (userChats.isEmpty) {
+              sink.add(null);
+            } else {
+              sink.add(userChats.first);
+            }
+          },
+        ),
+      );
     } catch (e) {
       // Rethrow any exceptions for further error handling and debugging
       rethrow;

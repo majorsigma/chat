@@ -50,7 +50,6 @@ class AppRoutes {
         return MaterialPageRoute(
           settings: routeSettings,
           builder: (context) {
-            _logger.d("Route Arguments: ${routeSettings.arguments}");
             final extraMap = routeSettings.arguments as Map;
             final user = GChatUser.fromMap(extraMap["receipient"]);
             return ChatDMPage(receipient: user);

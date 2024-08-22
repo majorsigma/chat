@@ -23,7 +23,7 @@ class ChatDMPage extends StatefulWidget {
 class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   final _messageController = RestorableTextEditingController();
   List<Message> _messages = [];
-  late Stream<Chat> _chatStream;
+  late Stream<Chat?> _chatStream;
   final _scrollController = ScrollController();
   final FocusNode _messageFocusNode = FocusNode();
   final _logger = GChatUtils.getLogger("ChatDMPage");
@@ -56,7 +56,6 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
     _initializeChat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _messageFocusNode.addListener(() {
-        _logger.d("Has focus: ${_messageFocusNode.hasFocus}");
         if (_messageFocusNode.hasFocus) {
           _scrollToBottom();
         }
@@ -74,7 +73,13 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   @override
   Widget build(BuildContext context) {
     final currentUserId = context.read<AuthViewModel>().currentAuthUser?.uid;
-    _chatStream = context.read<ChatsViewModel>().fetchChat();
+    _chatStream =
+        context.read<ChatsViewModel>().fetchChat(widget.receipient.uid);
+
+    _chatStream.listen((chat) {
+      _scrollToBottom();
+    });
+    
 
     return Scaffold(
       backgroundColor: const Color(0xfff6f6f6),
@@ -93,11 +98,10 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
               child: Column(
                 children: [
                   Expanded(
-                    child: StreamBuilder<Chat>(
+                    child: StreamBuilder<Chat?>(
                       stream: _chatStream,
-                      builder: (context, AsyncSnapshot<Chat> snapshot) {
+                      builder: (context, AsyncSnapshot<Chat?> snapshot) {
                         if (snapshot.hasData) {
-                          _scrollToBottom();
                           final chat = snapshot.data;
                           if (chat == null) {
                             return const Center(
@@ -107,17 +111,20 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
                             _messages = chat.messages ?? [];
 
                             if (_messages.isEmpty) {
-                              return const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.mail,
-                                      size: 40,
-                                    ),
-                                    Text("Start new conversation with user!")
-                                  ],
-                                ),
+                              return ListView(
+                                controller: _scrollController,
+                                children: const [
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.mail,
+                                        size: 40,
+                                      ),
+                                      Text("Start new conversation with user!")
+                                    ],
+                                  )
+                                ],
                               );
                             }
 
@@ -236,15 +243,19 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () async {
-      if (_scrollController.hasClients) {
-        await _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 50,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+    try {
+      Future.delayed(const Duration(milliseconds: 100), () async {
+        if (_scrollController.hasClients) {
+          await _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent + 50,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    } catch (e) {
+      _logger.e("Exception e");
+    }
   }
 }
 

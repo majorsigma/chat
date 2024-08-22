@@ -26,9 +26,9 @@ class ChatsViewModel extends ChangeNotifier {
     }
   }
 
-  Stream<Chat> fetchChat() {
+  Stream<Chat?> fetchChat(String recipientId) {
     try {
-      final stream = ChatRepository.instance.fetchChat();
+      final stream = ChatRepository.instance.fetchChat(recipientId);
 
       return stream;
     } catch (e) {
