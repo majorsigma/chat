@@ -32,9 +32,9 @@ jobs:
         id: create-release
         uses: actions/create-release@v1
         with:
-          tag_name: "v${GITHUB_RUN_NUMBER}"
-          release_name: "Release ${GITHUB_RUN_NUMBER}"
-          body: "Automated release for commit ${GITHUB_SHA}"
+          tag_name: "v${{ github.run_number }}"
+          release_name: "Release ${{ github.run_number }}"
+          body: "Automated release for commit ${{ github.sha }}"
           draft: false
           prerelease: false
         env:
