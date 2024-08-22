@@ -28,5 +28,13 @@ jobs:
         with:
           name: GChat
           path: build/app/outputs/apk/release/app-release.apk
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NAME: "Release ${GITHUB_RUN_NUMBER}"
+          RELEASE_BODY: "Automated release for commit ${GITHUB_SHA}"
+          TAG_NAME: "v${GITHUB_RUN_NUMBER}"
+          RELEASE_ASSET: "build/app/outputs/apk/release/app-release.apk"
           
 
