@@ -6,6 +6,7 @@ import 'package:gchat/features/chat/views/widgets/chat_tile.dart';
 import 'package:gchat/features/user/models/user.dart';
 import 'package:gchat/features/user/viewmodel/user_viewmodel.dart';
 import 'package:gchat/navigation.dart';
+import 'package:gchat/utils.dart';
 import 'package:provider/provider.dart';
 
 class ChatsView extends StatelessWidget {
@@ -34,10 +35,20 @@ class ChatsView extends StatelessWidget {
             itemBuilder: (BuildContext context, int index) {
               return ChatTile(
                 user: users[index],
-                onTap: () => context.restorablePushNamed(
-                  AppRoutes.chatDm,
-                  arguments: {"receipient": users[index].toMap()},
-                ),
+                onTap: () {
+                  if (users[index].isOnline == false) {
+                    GChatUtils.showSnackbar(
+                      context,
+                      "User is currently offline. You will be continue chat your chat when user is online.",
+                    );
+                    return;
+                  } else {
+                    context.restorablePushNamed(
+                      AppRoutes.chatDm,
+                      arguments: {"receipient": users[index].toMap()},
+                    );
+                  }
+                },
               );
             },
           );
