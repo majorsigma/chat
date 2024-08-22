@@ -27,7 +27,6 @@ class _ChatDMPageState extends State<ChatDMPage> with RestorationMixin {
   final _scrollController = ScrollController();
   final FocusNode _messageFocusNode = FocusNode();
   final _logger = GChatUtils.getLogger("ChatDMPage");
-  double _scrollExtent = 0;
 
   void _registerForRestoration() {
     registerForRestoration(_messageController, "messageController");
@@ -301,9 +300,6 @@ class ChatBubble extends StatelessWidget {
             ],
           ),
         ),
-        // Positioned(
-        //   child:
-        // )
       ],
     );
   }

@@ -28,10 +28,7 @@ class ChatsView extends StatelessWidget {
           final users = snapshot.data!;
           return ListView.separated(
             separatorBuilder: (BuildContext context, int index) {
-              return const Divider(
-                color: AppColor.primaryColor,
-                thickness: 0.5,
-              );
+              return const SizedBox(height: 8);
             },
             itemCount: snapshot.data!.length,
             itemBuilder: (BuildContext context, int index) {
