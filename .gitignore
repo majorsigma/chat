@@ -44,3 +44,5 @@ app.*.map.json
 
 build/app/outputs/flutter-apk
 
+# FVM Version Cache
+.fvm/
