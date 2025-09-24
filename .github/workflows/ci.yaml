@@ -1,62 +1,12 @@
-# name: CI
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   build_apk:
-#     name: Build Flutter (Android)
-#     runs-on: ubuntu-latest
-#     steps:
-#       -
-#       - uses: actions/checkout@v2
-#       - uses: actions/setup-java@v1
-#         with:
-#           java-version: "11.0"
-#           cache: "gradle"
-#       - uses: subosito/flutter-action@v2
-#         with:
-#           flutter-version: "3.22.3"
-#           channel: "stable"
-#           cache: true
-#       - run: flutter clean
-#       - run: flutter pub get
-#       - run: dart run build_runner build --delete-conflicting-outputs
-#       - run: flutter build apk --release
-#       - uses: actions/upload-artifact@v1
-#         with:
-#           name: GChat
-#           path: build/app/outputs/apk/release/app-release.apk
-#       - name: Create Release
-#         id: create-release
-#         uses: actions/create-release@v1
-#         with:
-#           tag_name: "v${{ github.run_number }}"
-#           release_name: "Release ${{ github.run_number }}"
-#           body: "Automated release for commit ${{ github.sha }}"
-#           draft: false
-#           prerelease: false
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.TOKEN }}
-
-#       - name: Upload APK Asset
-#         uses: actions/upload-release-asset@v1
-#         with:
-#           upload_url: ${{ steps.create-release.outputs.upload_url }}
-#           asset_path: "build/app/outputs/apk/release/app-release.apk"
-#           asset_name: "GChat.apk"
-#           asset_content_type: "application/vnd.android.package-archive"
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.TOKEN }}
-
 name: CI
 
 on:
   push:
     branches:
       - main
+
+permissions:
+  contents: write
 
 jobs:
   flutter_test:
@@ -73,12 +23,9 @@ jobs:
           flutter-version: "3.27.3"
           channel: "stable"
           cache: true
-      - run: flutter pub get
-      # - run: flutter test
 
   build_apk:
-    name: Build Flutter (Android)
-    # needs: [flutter_test]
+    name: Build Android Artifact
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -96,6 +43,16 @@ jobs:
           flutter-version: "3.27.3"
           channel: "stable"
           cache: true
+
+      - name: Extract Version from pubspec.yaml
+        id: extract_version
+        shell: bash
+        env:
+          FLUTTER_ROOT: ${{ env.FLUTTER_ROOT }}
+          PUB_CACHE: ${{ env.PUB_CACHE }}
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}')
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Prepare Android signing
         run: |
@@ -118,51 +75,20 @@ jobs:
         run: flutter build aab --release
 
       - name: Upload AAB
+        id: upload_aab
         uses: actions/upload-artifact@v4
         with:
-          name: MuleEx Partner
+          name: GChat
           path: build/app/outputs/bundle/release/app-release.aab
-
-      - name: Extract Version from pubspec.yaml
-        id: extract_version
-        shell: bash
-        env:
-          FLUTTER_ROOT: ${{ env.FLUTTER_ROOT }}
-          PUB_CACHE: ${{ env.PUB_CACHE }}
-        run: |
-          VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}')
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-
-      # - name: Create Tag Release
-      #   id: create-release
-      #   uses: actions/create-release@v1
-      #   with:
-      #     tag_name: "v${{ env.VERSION }}"
-      #     release_name: "Release ${{ github.run_number }}"
-      #     body: ${{ github.event.commits[0].message }}
-      #     draft: false
-      #     prerelease: false
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
 
       - name: Release AAB
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name:  ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           target_commitish: ${{ github.sha }}
           tag_name: "v${{ env.VERSION }}"
-          files: "build/app/outputs/bundle/release/app-release.aab"
-
-      # - name: Upload AAB Build
-      #   uses: actions/upload-release-asset@v1
-      #   with:
-      #     upload_url: ${{ steps.create-release.outputs.upload_url }}
-      #     asset_path: "build/app/outputs/bundle/release/app-release.aab"
-      #     asset_name: "GChat-${{ env.VERSION }}.aab"
-      #     asset_content_type: "application/vnd.android.package-archive"
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
+          files: build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload AAB to Production Track
         id: upload_production
@@ -170,6 +96,6 @@ jobs:
         with:
           service_account_json: ${{ secrets.GC_SERVICE_ACCOUNT_JSON }}
           package_name: "com.gchat.app"
-          aab_file_path: "build/outputs/bundle/release/app-release.aab"
+          aab_file_path: build/outputs/bundle/release/app-release.aab
           track: "production"
           release_status: "completed"
