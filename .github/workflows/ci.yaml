@@ -107,6 +107,13 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Create key.properties file
+        run: cat > ${{ github.workspace }}/android/key.properties << EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_ALIAS_PASSWORD}}
+          keyAlias=${{ secrets.KEY_PASSWORD }}
+          storeFile=../app/keystore.jks EOF
+
       - name: Build APK
         run: flutter build apk --release
 
@@ -147,4 +154,13 @@ jobs:
           asset_content_type: "application/vnd.android.package-archive"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-#
+
+      - name: Upload .aab to Production Track
+        id: upload_production
+        uses: KevinRohn/github-action-upload-play-store@v1.0.0
+        with:
+          service_account_json: ${{ secrets.GC_SERVICE_ACCOUNT_JSON }}
+          package_name: "com.gchat.app"
+          aab_file_path: "./build/outputs/bundle/release/app-release.aab"
+          track: "production"
+          release_status: "completed"
