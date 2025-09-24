@@ -107,6 +107,10 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Create Keystore file
+        run: cat ${{ secrets.KEYSTORE_FILE }} > ${{ github.workspace }}/android/app/keystore.jks
+
+
       - name: Create key.properties file
         run: cat > ${{ github.workspace }}/android/key.properties << EOF
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
