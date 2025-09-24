@@ -100,11 +100,11 @@ jobs:
       - name: Prepare Android signing
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d  > "${{ github.workspace }}/android/app/keystore.jks"
-          
+
           cat > android/key.properties <<EOF
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_ALIAS_PASSWORD}}
-          keyAlias=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
           storeFile=../app/keystore.jks
           EOF
 
@@ -115,13 +115,13 @@ jobs:
         run: flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build aab --release
 
-      - name: Upload APK
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: MuleEx Partner
-          path: build/app/outputs/flutter-apk/app-stable-release.apk
+          path: build/app/outputs/bundle/release/app-release.aab
 
       - name: Extract Version from pubspec.yaml
         id: extract_version
@@ -149,8 +149,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: "build/app/outputs/apk/release/app-release.apk"
-          asset_name: "GChat-${{ env.VERSION }}.apk"
+          asset_path: "build/app/outputs/bundle/release/app-release.aab"
+          asset_name: "GChat-${{ env.VERSION }}.aab"
           asset_content_type: "application/vnd.android.package-archive"
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -161,6 +161,6 @@ jobs:
         with:
           service_account_json: ${{ secrets.GC_SERVICE_ACCOUNT_JSON }}
           package_name: "com.gchat.app"
-          aab_file_path: "./build/outputs/bundle/release/app-release.aab"
+          aab_file_path: "build/outputs/bundle/release/app-release.aab"
           track: "production"
           release_status: "completed"
