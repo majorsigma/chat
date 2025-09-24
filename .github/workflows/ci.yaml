@@ -97,11 +97,11 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Create Keystore file
-        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d  > ${{ github.workspace }}/android/app/keystore.jks
-
-      - name: Create key.properties file
-        run: cat > android/key.properties <<EOF
+      - name: Prepare Android signing
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d  > "${{ github.workspace }}/android/app/keystore.jks"
+          
+          cat > android/key.properties <<EOF
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_ALIAS_PASSWORD}}
           keyAlias=${{ secrets.KEY_PASSWORD }}
