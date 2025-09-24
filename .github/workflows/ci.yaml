@@ -96,6 +96,6 @@ jobs:
         with:
           service_account_json: ${{ secrets.GC_SERVICE_ACCOUNT_JSON }}
           package_name: "com.gchat.app"
-          aab_file_path: build/outputs/bundle/release/app-release.aab
+          aab_file_path: build/app/outputs/bundle/release/app-release.aab
           track: "production"
           release_status: "completed"
